@@ -1,0 +1,220 @@
+#include <Servo.h>
+#include <math.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+Servo motor1, motor2, motor3, motor4, motor5, motor6;
+
+const int servoPin1 = 5;
+const int servoPin2 = 6;
+const int servoPin3 = 7;
+const int servoPin4 = 8;
+const int servoPin5 = 9;
+const int servoPin6 = 10;
+
+// 모터 딜레이 및 단위 스텝 초기화
+const double delay_max = 100.0;
+const double delay_min = 15.0;
+const double delay_dif = delay_max - delay_min;
+const double step = 1.0;  // Angle increment
+
+double theta1, theta2, theta2a, theta2b, theta3, theta4;
+double theta5 = 90.0 / 180.0 * M_PI;
+double theta234;
+
+double theta1_pre = 90.0 / 180.0 * M_PI, theta1_new;
+double theta2_pre = 90.0 / 180.0 * M_PI, theta2_new;
+double theta3_pre = 90.0 / 180.0 * M_PI, theta3_new;
+double theta4_pre = 90.0 / 180.0 * M_PI, theta4_new;
+double theta5_pre = 90.0 / 180.0 * M_PI, theta5_new;
+
+// Robot arm dimensions
+double Px, Py, Pz;
+const double a2 = 105.0;
+const double a3 = 150.0;
+const double d1 = 75.0;
+double d5;
+int mode = 1; // 1: detect, 2: grab
+
+void setup() {
+  Serial.begin(9600);
+
+  // Attach servos to pins
+  motor1.attach(servoPin1);
+  motor2.attach(servoPin2);
+  motor3.attach(servoPin3);
+  motor4.attach(servoPin4);
+  motor5.attach(servoPin5);
+  motor6.attach(servoPin6);
+
+  // Set initial position
+  Px = 20.0;
+  Py = 0.0;
+}
+
+void loop() {
+  if (mode == 1) {
+    d5 = 50.0;
+    theta234 = 0.0;
+
+    if (Serial.available() > 0) {
+      String data = Serial.readStringUntil('\n');
+      
+      // Extract X and Y values from the input
+      int x_start = data.indexOf('X') + 1;
+      int y_start = data.indexOf('Y') + 1;
+      double x_value = atof(data.substring(x_start, data.indexOf('Y')).c_str());
+      double y_value = atof(data.substring(y_start).c_str());
+
+      Serial.print("Received X: ");
+      Serial.print(x_value);
+      Serial.print(", Y: ");
+      Serial.println(y_value);
+
+      // Px, Py 값 업데이트
+      Px += x_value;
+      Py += y_value;
+
+      // 각도 계산
+      theta1 = atan2(Py, Px);
+
+      double a = Pz - d1 - d5 * sin(theta234);
+      double b = sqrt(pow(Px, 2) + pow(Py, 2)) - d5 * cos(theta234);
+
+      double Cos3 = (pow(a, 2) + pow(b, 2) - pow(a2, 2) - pow(a3, 2)) / (2 * a2 * a3);
+      double Sin3 = sqrt(1 - pow(Cos3, 2));
+
+      theta3 = atan2(Sin3, Cos3);
+      theta2a = atan2(a, b);
+      theta2b = atan2(a3 * sin(theta3), a2 + a3 * cos(theta3));
+      theta2 = theta2a + theta2b;
+      theta4 = theta2 - theta3;
+
+      if (isnan(theta2)) {
+        Serial.println("Work range exceeded! Please re-enter");
+      } else {
+        update_angles();
+        print_angles();
+      }
+    }
+  } else { // mode == 2
+    d5 = 185.0;
+    theta234 = -80.0 * M_PI / 180.0;
+    
+    // Calculate joint angles
+    theta1 = atan2(Py, Px);
+    double a = Pz - d1 - d5 * sin(theta234);
+    double b = sqrt(pow(Px, 2) + pow(Py, 2)) - d5 * cos(theta234);
+    
+    double Cos3 = (pow(a, 2) + pow(b, 2) - pow(a2, 2) - pow(a3, 2)) / (2 * a2 * a3);
+    double Sin3 = sqrt(1 - pow(Cos3, 2));
+    
+    theta3 = atan2(Sin3, Cos3);
+    theta2a = atan2(a, b);
+    theta2b = atan2(a3 * sin(theta3), a2 + a3 * cos(theta3));
+    theta2 = theta2a + theta2b;
+    theta4 = theta2 - theta3;
+
+    if (isnan(theta2)) {
+      Serial.println("Work range exceeded! Please re-enter");
+    } else {
+      update_angles();
+      print_angles();
+    }
+  }
+}
+
+// Update joint angles and write to motors
+void update_angles() {
+  theta1_new = theta1;
+  theta2_new = theta2;
+  theta3_new = theta3;
+  theta4_new = theta4;
+  theta5_new = theta5;
+
+  if (theta2a > theta2b) {
+    motor_write(1, theta1_new, theta1_pre);
+    motor_write(3, theta3_new, theta3_pre);
+    motor_write(2, theta2_new, theta2_pre);
+    motor_write(4, theta4_new, theta4_pre);
+    motor_write(5, theta5_new, theta5_pre);
+  } else {
+    motor_write(1, theta1_new, theta1_pre);
+    motor_write(2, theta2_new, theta2_pre);
+    motor_write(3, theta3_new, theta3_pre);
+    motor_write(4, theta4_new, theta4_pre);
+    motor_write(5, theta5_new, theta5_pre);
+  }
+
+  // Update previous angles
+  theta1_pre = theta1;
+  theta2_pre = theta2;
+  theta3_pre = theta3;
+  theta4_pre = theta4;
+  theta5_pre = theta5;
+}
+
+// Print joint angles for debugging
+void print_angles() {
+  Serial.print("Servo 1 Angle: ");
+  Serial.println(theta1 * 180.0 / M_PI);
+  Serial.print("Servo 2 Angle: ");
+  Serial.println(theta2 * 180.0 / M_PI);
+  Serial.print("Servo 3 Angle: ");
+  Serial.println(theta3 * 180.0 / M_PI);
+  Serial.print("Servo 4 Angle: ");
+  Serial.println(theta4 * 180.0 / M_PI);
+  Serial.print("theta2a: ");
+  Serial.println(theta2a * 180.0 / M_PI);
+  Serial.print("theta2b: ");
+  Serial.println(theta2b * 180.0 / M_PI);
+}
+
+// Gaussian function for smooth motor movement
+double gaussian(double x, double b, double c) {
+  return delay_dif * exp(-pow(x - b, 2) / (2 * pow(c, 2)));
+}
+
+// Write angles to motors with smooth transitions
+void motor_write(int motor_num, double theta_new, double theta_pre) {
+  // Convert angles to degrees (except for motor 4)
+  if (motor_num != 4) {
+    theta_new = theta_new * 180.0 / M_PI;
+    theta_pre = theta_pre * 180.0 / M_PI;
+  } else {
+    theta_new = 180 - (90 + theta_new * 180.0 / M_PI);
+    theta_pre = 180 - (90 + theta_pre * 180.0 / M_PI);
+  }
+
+  // Calculate center and spread for the Gaussian function
+  double b = (theta_new + theta_pre) * 0.5;
+  double c = (theta_new + theta_pre) * 0.25;
+
+  // Move motor to new angle
+  if (theta_new > theta_pre) {
+    for (double x = theta_pre; x <= theta_new; x += step) {
+      double y = delay_max - gaussian(x, b, c);
+      move_motor(motor_num, x);
+      delay(y);
+    }
+  } else {
+    for (double x = theta_pre; x >= theta_new; x -= step) {
+      double y = delay_max - gaussian(x, b, c);
+      move_motor(motor_num, x);
+      delay(y);
+    }
+  }
+}
+
+void move_motor(int motor_num, double x) {
+  switch (motor_num) {
+    case 1: motor1.write(x); break;
+    case 2: motor2.write(x); break;
+    case 3: motor3.write(x); break;
+    case 4: motor4.write(x); break;
+    case 5: motor5.write(x); break;
+    default: break;
+  }
+}
