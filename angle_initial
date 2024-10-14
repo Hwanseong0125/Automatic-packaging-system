@@ -1,0 +1,45 @@
+#include <Servo.h>
+#include <math.h>
+
+Servo motor1;
+Servo motor2;
+Servo motor3;
+Servo motor4;
+Servo motor5;
+Servo motor6;
+int servoPin1 = 5;
+int servoPin2 = 6;
+int servoPin3 = 7;
+int servoPin4 = 8;
+int servoPin5 = 9;
+int servoPin6 = 10;
+
+double theta1=90;
+double theta2=90;
+double theta3=90;
+double theta4=90;
+double theta5=90; 
+double theta6=180; //180 : 닫기 120: 열기
+
+void setup() {
+  Serial.begin(9600);
+  motor1.attach(servoPin1);
+  motor2.attach(servoPin2);
+  motor3.attach(servoPin3);
+  motor4.attach(servoPin4);
+  motor5.attach(servoPin5);
+  motor6.attach(servoPin6);
+}
+
+void loop() {
+
+  // 서보 모터를 각도에 맞게 움직이기
+  motor1.write(theta1); // 라디안에서 디그리로 변환
+  motor2.write(theta2);
+  motor3.write(theta3);
+  motor4.write(theta4);
+  motor5.write(theta5);
+  motor6.write(theta6);
+
+  delay(5000);
+}
