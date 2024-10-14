@@ -1,0 +1,41 @@
+#include <Servo.h>
+#include <math.h>
+
+Servo servo;
+
+  float SetAngle = 180;
+  float delay_max = 30.0;
+  float delay_min = 5.0;
+  float delay_dif = delay_max-delay_min;
+  float b = 0.5*SetAngle;   // 함수의 중심
+  float c = 0.3*SetAngle;   // 함수의 표준 편차
+  
+  // x 값 범위 설정
+  float x_min = 0;
+  float x_max = SetAngle;
+  float step = 1;
+  
+void setup() {
+  // 시리얼 통신을 시작합니다.
+  Serial.begin(9600);
+  servo.attach(9);
+
+}
+
+void loop() {
+    // x 값 범위 내에서 가우스 함수 계산
+  for (float x = x_min; x <= x_max; x += step) {
+    float y = delay_max - gaussian(x, b, c);
+    servo.write(x);
+    delay(y);
+  }
+
+  delay(2000);
+  servo.write(0);
+  delay(2000);
+}
+
+// 가우스 함수 정의
+float gaussian(float x, float b, float c) {
+  return delay_dif * exp(-((x - b) * (x - b)) / (2 * c * c));
+}
