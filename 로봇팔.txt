@@ -1,0 +1,23 @@
+- 관련 블로그 
+1. https://ropiens.tistory.com/177
+2. https://ddangeun.tistory.com/27
+
+- 로봇공학 교재
+1.  Introduction to Robotics (John J. Craig)
+http://www.mech.sharif.ir/c/document_library/get_file?uuid=5a4bb247-1430-4e46-942c-d692dead831f&groupId=14040 
+
+2. Introduction to Humanoid Robotics (Shuuji Kajita)
+https://link.springer.com/book/10.1007/978-3-642-54536-8
+
+3. Modern Robotics (KEVIN M. LYNCH, FRANK C. PARK)
+http://hades.mech.northwestern.edu/images/7/7f/MR.pdf
+
+- 로봇팔 논문
+1.https://www.researchgate.net/publication/314269729_The_Modeling_of_Inverse_Kinematics_for_5_DOF_Manipulator
+
+2. https://ajsrp.com/wp-content/uploads/2021/11/simulation-and-interfacing-of-5-dof-educational-robot-arm_compressed.pdf
+
+3. https://www.iasj.net/iasj/download/4182f0e8af27c458
+
+4. https://link.springer.com/article/10.1007/s42452-020-3039-y#Equ1
+
